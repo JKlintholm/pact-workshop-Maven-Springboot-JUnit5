@@ -7,9 +7,19 @@ jobs:
   export:
     runs-on: ubuntu-latest
     steps:
-      - name: Create bare clone directly
+      - name: Create bare clone
         run: |
           git clone --bare https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git repository.git
+
+      - name: Strip pull requests and internal refs
+        run: |
+          cd repository.git
+          rm -rf refs/pull
+          if [ -f packed-refs ]; then
+            sed -i '/refs\/pull/d' packed-refs
+          fi
+          git reflog expire --expire=now -- all
+          git gc --prune=now
       
       - name: Package archive
         run: |
