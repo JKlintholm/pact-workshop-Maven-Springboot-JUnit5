@@ -18,7 +18,7 @@ jobs:
           if [ -f packed-refs ]; then
             sed -i '/refs\/pull/d' packed-refs
           fi
-          git reflog expire --expire=now -- all
+          git reflog expire --expire=now --all
           git gc --prune=now
       
       - name: Package archive
