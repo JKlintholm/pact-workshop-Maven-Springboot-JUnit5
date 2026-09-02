@@ -7,19 +7,36 @@ jobs:
   export:
     runs-on: ubuntu-latest
     steps:
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - name: Install git-filter-repo
+        run: pip install git-filter-repo
+        
       - name: Create bare clone
         run: |
           git clone --bare https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git repository.git
 
-      - name: Strip pull requests and internal refs
+      - name: Clean commit messages and prune dangling PR objects
         run: |
           cd repository.git
+
+          # 1. Remove physical PR references
           rm -rf refs/pull
           if [ -f packed-refs ]; then
             sed -i '/refs\/pull/d' packed-refs
           fi
+
+          # 2. Clean "Merge pull request #..." from all commit messages in the entire history
+          git-filter-repo --message-callback 'return message.replace(b"Merge pull request #", b"Merge step #")' --force
+
+          # 3. Force clean all orphan PR-commits and repackage the database
           git reflog expire --expire=now --all
-          git gc --prune=now
+          git repack -a -d -l
+          git prune --expire=now
+          git gc --prune=now --aggressive
       
       - name: Package archive
         run: |
