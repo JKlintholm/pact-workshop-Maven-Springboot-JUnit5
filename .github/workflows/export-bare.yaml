@@ -1,0 +1,25 @@
+name: Bare Repository
+
+on:
+  workflow_dispatch:
+
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout with full history
+        uses: actions/checkout@v4
+        with:
+            fetch-depth: 0
+
+      - name: Create bare clone bundle
+        run: |
+          git clone --bare . repository.git
+          tar -czvf bare-repoy.tar.gz repository.git
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+            name: bare-repo-archive
+            path: bare-repo.tar.gz
+            retention-days: 1
